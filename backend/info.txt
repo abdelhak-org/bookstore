@@ -1,0 +1,84 @@
+// create login system 
+
+
+// create api 
+app.post("/register",async (req , res )=>{
+ 
+ // get data from front end 
+
+ const {userName , email , password } = req.body;
+
+ // hash the password 
+  bcrypt.hash(password , 10 ).then((hash)=>{
+
+    //  add user to database 
+     Users.create({
+        userName ,
+        email, 
+        password:hash ,
+
+     })
+  }).then(()=>{
+   res.json("USER IS REGISTER)
+  }).catch((err )=>{
+   if(err){
+    res.status(400).json({error:err})
+   }
+  }) 
+
+
+})
+
+
+/// create login endpoint 
+
+app.post("/login" ,async (req , res )=>{
+    // get data from front end 
+
+ const {userName , email , password } = req.body;
+
+ // check if user exit 
+
+ const user = await users.findOne({username:userName});
+ if( !user ){
+  res,status(400).json({error :"user does not exist})
+ }
+
+ res.json("User is Loged In")
+ 
+ // compare password with db password 
+  bcrypt.compare(password , user.password).then((match)=>{
+    if(!match){
+        res.status(400).json({error : "worong login data});
+    } else {
+        const accessToken = createToken(user) ;
+        res.cookie("token" , accessToken , {
+            maxAge : 60*60*24*30*1000
+        })
+         res.status(200).json("user loged in")
+
+    }
+  })
+
+
+
+
+}) 
+
+
+
+
+//create function to create a token
+const {sign , verify } = require("jsonwebtoken);
+
+const createToken =(user)=> {
+    const accessToken = sing(  {
+        username:user.userName 
+        
+    } ,"secretString" , {expireIN:"2h"}) 
+
+    return accessToken
+}
+
+
+module.exports ={ createToken}
